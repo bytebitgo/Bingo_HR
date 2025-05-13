@@ -53,8 +53,25 @@ jobs:
           script: |
             sudo apt-get update && sudo apt-get install -y python3-venv
             sudo -i bash -c "cd /home/Bingo_HR && python3 -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt"
-            sudo -i pkill -f app.py || true
-            sudo -i bash -c "/home/Bingo_HR/.venv/bin/python /home/Bingo_HR/app.py > /home/Bingo_HR/app.log 2>&1 &"
-            sleep 2
-            sudo -i pgrep -af app.py || true
+            sudo bash -c 'cat >/etc/systemd/system/bingo-flask.service <<EOF
+[Unit]
+Description=Bingo HR Flask Service
+After=network.target
+
+[Service]
+User=bingo
+Group=bingo
+WorkingDirectory=/home/Bingo_HR
+Environment="PATH=/home/Bingo_HR/.venv/bin"
+ExecStart=/home/Bingo_HR/.venv/bin/python /home/Bingo_HR/app.py
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target
+EOF'
+            sudo systemctl daemon-reload
+            sudo systemctl enable bingo-flask
+            sudo systemctl restart bingo-flask
+            sudo systemctl status bingo-flask --no-pager
             sudo -i cat /home/Bingo_HR/app.log || true 
