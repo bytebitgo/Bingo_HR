@@ -1,8 +1,8 @@
-Flask==3.0.3
-requests==2.31.0
-Flask-SQLAlchemy==3.1.1
-Flask-Login==0.6.3
-Werkzeug==3.0.1 
-openai-1.78.0
+Flask
+requests
+Flask-SQLAlchemy
+Flask-Login
+Werkzeug
+openai
 python-docx
 PyPDF2
