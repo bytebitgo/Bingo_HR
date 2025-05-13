@@ -50,9 +50,11 @@ jobs:
           key: ${{ secrets.AZURE_VM_KEY }} # moc，私钥内容
           port: ${{ secrets.AZURE_VM_PORT }} # moc, 默认22
           script: |
-            cd /home/Bingo_HR
-            python3 -m venv .venv
-            source .venv/bin/activate
-            pip install -r requirements.txt
-            pkill -f app.py || true
-            nohup python app.py > app.log 2>&1 & 
+            sudo -i bash -c '
+              cd /home/Bingo_HR
+              python3 -m venv .venv
+              source .venv/bin/activate
+              pip install -r requirements.txt
+              pkill -f app.py || true
+              nohup python app.py > app.log 2>&1 &
+            ' 
