@@ -104,6 +104,11 @@ jobs:
         if: success()
         run: |
           WORKFLOW_URL="https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+          CHANGELOG="$(awk '/^## \[/{if(NR>1)exit;print;getline;while(/^#|^$|^ /==0){print;getline}}' changelog.md)"
+          if [ -z "$CHANGELOG" ]; then
+            # 兼容性处理：如果awk不支持上述写法，取前20行
+            CHANGELOG="$(head -20 changelog.md)"
+          fi
           curl -X POST 'https://n8n.gslb.vip/webhook/bd887ed9-0149-4fca-bee0-55e50a026d87' \
             -H 'Content-Type: application/json' \
-            -d "{\"msg\": \"Bingo HR 系统自动部署成功！\", \"url\": \"$WORKFLOW_URL\"}" 
+            -d "{\"msg\": \"Bingo HR 系统自动部署成功！\", \"url\": \"$WORKFLOW_URL\", \"changelog\": \"$CHANGELOG\"}" 
