@@ -76,7 +76,8 @@ jobs:
             if [ "$RESET_DB" = "true" ]; then
               sudo -i /home/Bingo_HR/.venv/bin/python /home/Bingo_HR/reset_db.py
             fi
-            sudo mv /home/Bingo_HR/bingo-flask.service /etc/systemd/system/bingo-flask.service
+            sudo sleep 3
+            sudo \mv /home/Bingo_HR/bingo-flask.service /etc/systemd/system/bingo-flask.service
             sudo systemctl daemon-reload
             sudo systemctl enable bingo-flask
             sudo systemctl restart bingo-flask
