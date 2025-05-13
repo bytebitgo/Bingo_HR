@@ -98,4 +98,12 @@ jobs:
             sudo systemctl status bingo-flask --no-pager
 
             echo "========== [CI] 步骤5：输出 Flask 日志 =========="
-            sudo -i cat /home/Bingo_HR/app.log || true 
+            sudo -i cat /home/Bingo_HR/app.log || true
+
+      - name: Webhook通知部署成功
+        if: success()
+        run: |
+          WORKFLOW_URL="https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+          curl -X POST 'https://n8n.gslb.vip/webhook/bd887ed9-0149-4fca-bee0-55e50a026d87' \
+            -H 'Content-Type: application/json' \
+            -d "{\"msg\": \"Bingo HR 系统自动部署成功！\n工作流详情: $WORKFLOW_URL\"}" 
