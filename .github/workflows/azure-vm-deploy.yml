@@ -52,4 +52,9 @@ jobs:
           port: ${{ secrets.AZURE_VM_PORT }} # moc, 默认22
           script: |
             sudo apt-get update && sudo apt-get install -y python3-venv
-            sudo -i bash -c "cd /home/Bingo_HR && python3 -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt && pkill -f app.py || true && /home/Bingo_HR/.venv/bin/python /home/Bingo_HR/app.py > /home/Bingo_HR/app.log 2>&1 &" 
+            sudo -i bash -c "cd /home/Bingo_HR && python3 -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt"
+            sudo -i pkill -f app.py || true
+            sudo -i bash -c "/home/Bingo_HR/.venv/bin/python /home/Bingo_HR/app.py > /home/Bingo_HR/app.log 2>&1 &"
+            sleep 2
+            sudo -i pgrep -af app.py || true
+            sudo -i cat /home/Bingo_HR/app.log || true 
