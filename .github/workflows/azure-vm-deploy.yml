@@ -74,7 +74,11 @@ jobs:
             sudo apt-get update && sudo apt-get install -y python3-venv
             sudo -i bash -c "cd /home/Bingo_HR && python3 -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt"
             if [ "$RESET_DB" = "true" ]; then
+              echo "[CI] RESET_DB=true，准备执行数据库重置..."
               sudo -i /home/Bingo_HR/.venv/bin/python /home/Bingo_HR/reset_db.py
+              echo "[CI] reset_db.py 执行完毕。"
+            else
+              echo "[CI] RESET_DB!=true，跳过数据库重置。"
             fi
             sudo sleep 3
             sudo \mv /home/Bingo_HR/bingo-flask.service /etc/systemd/system/bingo-flask.service
