@@ -22,6 +22,16 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
+      - name: Ensure target directory exists on Azure VM
+        uses: appleboy/ssh-action@v0.1.10
+        with:
+          host: ${{ secrets.AZURE_VM_HOST }} # moc
+          username: ${{ secrets.AZURE_VM_USER }} # moc
+          key: ${{ secrets.AZURE_VM_KEY }} # moc，私钥内容
+          port: ${{ secrets.AZURE_VM_PORT }} # moc, 默认22
+          script: |
+            mkdir -p /home/Bingo_HR
+
       - name: Copy files to Azure VM
         uses: appleboy/scp-action@v0.1.7
         with:
