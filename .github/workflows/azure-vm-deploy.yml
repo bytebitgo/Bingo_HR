@@ -58,7 +58,7 @@ jobs:
           username: ${{ secrets.AZURE_VM_USER }} # moc
           key: ${{ secrets.AZURE_VM_KEY }} # moc，私钥内容
           port: ${{ secrets.AZURE_VM_PORT }} # moc, 默认22
-          source: '. bingo-flask.service'
+          source: '.'
           target: '/home/Bingo_HR' # 可根据实际情况调整
 
       - name: SSH to Azure VM and restart Flask app
