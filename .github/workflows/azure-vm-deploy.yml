@@ -106,4 +106,4 @@ jobs:
           WORKFLOW_URL="https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
           curl -X POST 'https://n8n.gslb.vip/webhook/bd887ed9-0149-4fca-bee0-55e50a026d87' \
             -H 'Content-Type: application/json' \
-            -d "{\"msg\": \"Bingo HR 系统自动部署成功！\n工作流详情: $WORKFLOW_URL\"}" 
+            -d "{\"msg\": \"Bingo HR 系统自动部署成功！\", \"url\": \"$WORKFLOW_URL\"}" 
