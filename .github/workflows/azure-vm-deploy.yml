@@ -33,27 +33,9 @@ jobs:
             sudo -i mkdir -p /home/Bingo_HR
             sudo -i chown bingo:bingo /home/Bingo_HR
 
-      - name: Copy files to Azure VM
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.AZURE_VM_HOST }} # moc
-          username: ${{ secrets.AZURE_VM_USER }} # moc
-          key: ${{ secrets.AZURE_VM_KEY }} # moc，私钥内容
-          port: ${{ secrets.AZURE_VM_PORT }} # moc, 默认22
-          source: '.'
-          target: '/home/Bingo_HR' # 可根据实际情况调整
-
-      - name: SSH to Azure VM and restart Flask app
-        uses: appleboy/ssh-action@v0.1.10
-        with:
-          host: ${{ secrets.AZURE_VM_HOST }} # moc
-          username: ${{ secrets.AZURE_VM_USER }} # moc
-          key: ${{ secrets.AZURE_VM_KEY }} # moc，私钥内容
-          port: ${{ secrets.AZURE_VM_PORT }} # moc, 默认22
-          script: |
-            sudo apt-get update && sudo apt-get install -y python3-venv
-            sudo -i bash -c "cd /home/Bingo_HR && python3 -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt"
-            sudo bash -c 'cat >/etc/systemd/system/bingo-flask.service <<EOF
+      - name: Generate systemd service file
+        run: |
+          cat > bingo-flask.service <<EOF
 [Unit]
 Description=Bingo HR Flask Service
 After=network.target
@@ -69,7 +51,29 @@ RestartSec=3
 
 [Install]
 WantedBy=multi-user.target
-EOF'
+EOF
+
+      - name: Copy files to Azure VM
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.AZURE_VM_HOST }} # moc
+          username: ${{ secrets.AZURE_VM_USER }} # moc
+          key: ${{ secrets.AZURE_VM_KEY }} # moc，私钥内容
+          port: ${{ secrets.AZURE_VM_PORT }} # moc, 默认22
+          source: '. bingo-flask.service'
+          target: '/home/Bingo_HR' # 可根据实际情况调整
+
+      - name: SSH to Azure VM and restart Flask app
+        uses: appleboy/ssh-action@v0.1.10
+        with:
+          host: ${{ secrets.AZURE_VM_HOST }} # moc
+          username: ${{ secrets.AZURE_VM_USER }} # moc
+          key: ${{ secrets.AZURE_VM_KEY }} # moc，私钥内容
+          port: ${{ secrets.AZURE_VM_PORT }} # moc, 默认22
+          script: |
+            sudo apt-get update && sudo apt-get install -y python3-venv
+            sudo -i bash -c "cd /home/Bingo_HR && python3 -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt"
+            sudo mv /home/Bingo_HR/bingo-flask.service /etc/systemd/system/bingo-flask.service
             sudo systemctl daemon-reload
             sudo systemctl enable bingo-flask
             sudo systemctl restart bingo-flask
