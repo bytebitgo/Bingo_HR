@@ -71,8 +71,13 @@ jobs:
           key: ${{ secrets.AZURE_VM_KEY }} # moc，私钥内容
           port: ${{ secrets.AZURE_VM_PORT }} # moc, 默认22
           script: |
+            echo "========== [CI] 步骤1：安装系统依赖 =========="
             sudo apt-get update && sudo apt-get install -y python3-venv
+
+            echo "========== [CI] 步骤2：创建虚拟环境并安装依赖 =========="
             sudo -i bash -c "cd /home/Bingo_HR && python3 -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt"
+
+            echo "========== [CI] 步骤3：数据库重置判定 =========="
             if [ "$RESET_DB" = "true" ]; then
               echo "[CI] RESET_DB=true，准备执行数据库重置..."
               sudo -i /home/Bingo_HR/.venv/bin/python /home/Bingo_HR/reset_db.py
@@ -80,10 +85,14 @@ jobs:
             else
               echo "[CI] RESET_DB!=true，跳过数据库重置。"
             fi
+
+            echo "========== [CI] 步骤4：部署 systemd 服务 =========="
             sudo sleep 3
             sudo \mv /home/Bingo_HR/bingo-flask.service /etc/systemd/system/bingo-flask.service
             sudo systemctl daemon-reload
             sudo systemctl enable bingo-flask
             sudo systemctl restart bingo-flask
             sudo systemctl status bingo-flask --no-pager
+
+            echo "========== [CI] 步骤5：输出 Flask 日志 =========="
             sudo -i cat /home/Bingo_HR/app.log || true 
