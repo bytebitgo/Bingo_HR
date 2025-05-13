@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>AI分析历史记录 - 简历管理系统</title>
+    <link href="/static/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+<div class="container mt-5">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2>AI分析历史记录</h2>
+        <a href="{{ url_for('index') }}" class="btn btn-outline-primary btn-sm">返回简历管理</a>
+    </div>
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>简历ID</th>
+                <th>文件名</th>
+                <th>用户</th>
+                <th>分析时间</th>
+                <th>状态</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for rec in records %}
+            <tr>
+                <td>{{ rec.id }}</td>
+                <td>{{ rec.resume_id }}</td>
+                <td>{{ rec.resume.filename if rec.resume else '-' }}</td>
+                <td>{{ rec.user.username if rec.user else '-' }}</td>
+                <td>{{ rec.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                <td>{{ rec.status }}</td>
+                <td><a href="{{ url_for('ai_analysis_record_detail', record_id=rec.id) }}" class="btn btn-sm btn-info">查看详情</a></td>
+            </tr>
+        {% else %}
+            <tr><td colspan="7" class="text-center">暂无分析记录</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+</body>
+</html> 

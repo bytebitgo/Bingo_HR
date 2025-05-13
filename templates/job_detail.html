@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ job.title }} - 招聘需求详情{% endblock %}
+
+{% block content %}
+<div class="container my-4">
+    <div class="card">
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+            <h2 class="mb-0">{{ job.title }}</h2>
+            <div>
+                {% if current_user.is_admin or current_user.id == job.user_id %}
+                <a href="{{ url_for('job_edit', job_id=job.id) }}" class="btn btn-light btn-sm me-2">
+                    <i class="bi bi-pencil"></i> 编辑
+                </a>
+                <button type="button" class="btn btn-danger btn-sm" 
+                       data-bs-toggle="modal" data-bs-target="#deleteModal">
+                    <i class="bi bi-trash"></i> 删除
+                </button>
+                {% endif %}
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <p><strong>创建时间：</strong> {{ job.created_at.strftime('%Y-%m-%d %H:%M') }}</p>
+                </div>
+                <div class="col-md-6">
+                    <p><strong>最后更新：</strong> {{ job.updated_at.strftime('%Y-%m-%d %H:%M') }}</p>
+                </div>
+                <div class="col-md-6">
+                    <p><strong>创建人：</strong> {{ job.user.username }}</p>
+                </div>
+            </div>
+
+            <div class="mb-4">
+                <h3>职位要求</h3>
+                <div class="card">
+                    <div class="card-body bg-light">
+                        {{ job.requirements|default('暂无职位要求')|nl2br|safe }}
+                    </div>
+                </div>
+            </div>
+
+            <div class="mb-4">
+                <h3>职位描述</h3>
+                <div class="card">
+                    <div class="card-body bg-light">
+                        {{ job.description|default('暂无职位描述')|nl2br|safe }}
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="card-footer">
+            <a href="{{ url_for('jobs_list') }}" class="btn btn-secondary">
+                <i class="bi bi-arrow-left"></i> 返回列表
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- 删除确认对话框 -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">确认删除</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="关闭"></button>
+            </div>
+            <div class="modal-body">
+                确定要删除招聘需求 "{{ job.title }}" 吗？此操作无法撤销。
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <form action="{{ url_for('job_delete', job_id=job.id) }}" method="POST" class="d-inline">
+                    <button type="submit" class="btn btn-danger">确认删除</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

@@ -1,0 +1,47 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.pyc
+*.pyo
+*.pyd
+*.pdb
+*.egg-info/
+.eggs/
+*.egg
+
+# 环境
+.venv/
+venv/
+env/
+ENV/
+
+# 编辑器
+.vscode/
+.idea/
+*.swp
+*.swo
+*.bak
+*.tmp
+
+# 日志
+*.log
+
+# 系统文件
+.DS_Store
+Thumbs.db
+
+# 部署/CI
+app.log
+*.sqlite3
+*.db
+
+# Jupyter
+.ipynb_checkpoints/
+
+# 其他
+*.orig
+
+# Azure Pipeline
+*.azure-pipelines/* 

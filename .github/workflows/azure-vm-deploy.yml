@@ -1,0 +1,48 @@
+name: Azure VM Deploy
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Copy files to Azure VM
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.AZURE_VM_HOST }} # moc
+          username: ${{ secrets.AZURE_VM_USER }} # moc
+          key: ${{ secrets.AZURE_VM_KEY }} # moc，私钥内容
+          port: ${{ secrets.AZURE_VM_PORT }} # moc, 默认22
+          source: '.'
+          target: '/home/Bingo_HR' # 可根据实际情况调整
+
+      - name: SSH to Azure VM and restart Flask app
+        uses: appleboy/ssh-action@v0.1.10
+        with:
+          host: ${{ secrets.AZURE_VM_HOST }} # moc
+          username: ${{ secrets.AZURE_VM_USER }} # moc
+          key: ${{ secrets.AZURE_VM_KEY }} # moc，私钥内容
+          port: ${{ secrets.AZURE_VM_PORT }} # moc, 默认22
+          script: |
+            cd /home/Bingo_HR
+            python3 -m venv .venv
+            source .venv/bin/activate
+            pip install -r requirements.txt
+            pkill -f app.py || true
+            nohup python app.py > app.log 2>&1 & 

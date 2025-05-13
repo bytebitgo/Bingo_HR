@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>系统设置 - 简历管理系统</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+<div class="container mt-5">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2>系统设置</h2>
+        <a href="{{ url_for('admin_users') }}" class="btn btn-outline-primary btn-sm">返回用户管理</a>
+    </div>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="alert alert-{{ category }}">{{ message }}</div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+    <form method="post" class="mt-4" autocomplete="off">
+        <div class="mb-3">
+            <label class="form-label">API Key</label>
+            <input type="text" class="form-control" name="api_key" value="{{ settings.api_key }}" autocomplete="off">
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Endpoint</label>
+            <input type="text" class="form-control" name="endpoint" value="{{ settings.endpoint }}" autocomplete="off">
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Deployment Name</label>
+            <input type="text" class="form-control" name="deployment_name" value="{{ settings.deployment_name }}" autocomplete="off">
+        </div>
+        <div class="mb-3">
+            <label class="form-label">API Version</label>
+            <input type="text" class="form-control" name="api_version" value="{{ settings.api_version }}" autocomplete="off">
+        </div>
+        <button type="submit" class="btn btn-success">保存设置</button>
+    </form>
+</div>
+</body>
+</html> 

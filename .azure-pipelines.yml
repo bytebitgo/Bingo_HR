@@ -1,0 +1,45 @@
+trigger:
+- main
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  VM_DEPLOY_PATH: '/home/Bingo_HR'
+
+steps:
+- task: UsePythonVersion@0
+  inputs:
+    versionSpec: '3.12'
+
+- script: |
+    python -m pip install --upgrade pip
+    pip install -r requirements.txt
+  displayName: 'Install dependencies (CI)'
+
+# 可选：添加自动化测试
+# - script: |
+#     pytest
+#   displayName: 'Run tests'
+
+- task: CopyFilesOverSSH@0
+  inputs:
+    sshEndpoint: 'your-ssh-service-connection'   # 替换为你在Azure DevOps服务连接中配置的SSH名称
+    sourceFolder: '$(Build.SourcesDirectory)'
+    contents: '**'
+    targetFolder: '$(VM_DEPLOY_PATH)'
+  displayName: 'Copy files to Azure VM'
+
+- task: SSH@0
+  inputs:
+    sshEndpoint: 'your-ssh-service-connection'
+    runOptions: 'commands'
+    command: |
+      cd $(VM_DEPLOY_PATH)
+      python3 -m venv .venv
+      source .venv/bin/activate
+      pip install -r requirements.txt
+      # python reset_db.py  # 如需每次重建数据库可取消注释
+      pkill -f app.py || true
+      nohup python app.py > app.log 2>&1 &
+  displayName: 'Install & Restart Flask app on VM' 

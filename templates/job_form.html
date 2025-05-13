@@ -1,0 +1,61 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    {% if action == 'edit' %}
+        编辑招聘需求
+    {% else %}
+        新增招聘需求
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="container my-4">
+    <div class="card">
+        <div class="card-header bg-primary text-white">
+            <h2 class="mb-0">
+                {% if action == 'edit' %}
+                    编辑招聘需求
+                {% else %}
+                    新增招聘需求
+                {% endif %}
+            </h2>
+        </div>
+        <div class="card-body">
+            <form method="POST" action="{{ url_for('job_edit', job_id=job.id) if action == 'edit' else url_for('job_add') }}">
+                <div class="mb-3">
+                    <label for="title" class="form-label">职位名称</label>
+                    <input type="text" class="form-control" id="title" name="title" 
+                           value="{{ job.title if job else '' }}" required>
+                    <div class="form-text">必填项，请输入职位名称</div>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="requirements" class="form-label">职位要求</label>
+                    <textarea class="form-control" id="requirements" name="requirements" 
+                              rows="5">{{ job.requirements if job else '' }}</textarea>
+                    <div class="form-text">请详细描述对应聘者的技能、经验等要求</div>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="description" class="form-label">职位描述</label>
+                    <textarea class="form-control" id="description" name="description" 
+                              rows="8">{{ job.description if job else '' }}</textarea>
+                    <div class="form-text">请详细描述职位的工作内容、职责等</div>
+                </div>
+                
+                <div class="mb-3 text-end">
+                    <a href="{{ url_for('job_detail', job_id=job.id) if action == 'edit' else url_for('jobs_list') }}" 
+                       class="btn btn-secondary me-2">取消</a>
+                    <button type="submit" class="btn btn-primary">
+                        {% if action == 'edit' %}
+                            保存修改
+                        {% else %}
+                            创建需求
+                        {% endif %}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %} 

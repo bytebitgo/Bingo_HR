@@ -1,0 +1,145 @@
+{% extends 'base.html' %}
+
+{% block title %}简历管理 - 首页{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2>简历管理系统</h2>
+        <div>
+            <span class="me-2">当前用户：{{ current_user.username }}{% if current_user.is_admin %}（超级管理员）{% endif %}</span>
+            <a href="{{ url_for('jobs_list') }}" class="btn btn-outline-primary btn-sm me-2">招聘需求</a>
+            {% if current_user.is_admin %}
+            <a href="{{ url_for('admin_users') }}" class="btn btn-outline-primary btn-sm me-2">用户管理</a>
+            <a href="{{ url_for('admin_settings') }}" class="btn btn-outline-primary btn-sm me-2">系统设置</a>
+            <a href="{{ url_for('admin_ai_queue') }}" class="btn btn-outline-primary btn-sm me-2">AI队列</a>
+            {% endif %}
+            <a href="{{ url_for('logout') }}" class="btn btn-outline-secondary btn-sm">退出登录</a>
+        </div>
+    </div>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="alert alert-{{ category }}">{{ message }}</div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+    <form method="post" enctype="multipart/form-data" class="mb-4">
+        <div class="mb-3">
+            <label for="resumes" class="form-label">批量上传简历（仅限pdf, word, excel, 图片, markdown）</label>
+            <input class="form-control" type="file" id="resumes" name="resumes" multiple required
+                   accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.gif,.bmp,.webp,.md">
+        </div>
+        <div class="mb-3">
+            <label for="job_id" class="form-label">关联招聘需求</label>
+            <select class="form-select" id="job_id" name="job_id" required>
+                <option value="">请选择招聘需求</option>
+                {% for job in jobs %}
+                    <option value="{{ job.id }}">{{ job.title }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <button type="submit" class="btn btn-primary">上传</button>
+    </form>
+    <h4>已上传简历</h4>
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th style="width:40px;"><input type="checkbox" id="selectAll"></th>
+                <th>文件名</th>
+                <th>大小</th>
+                <th>上传时间</th>
+                {% if current_user.is_admin %}<th>上传者</th>{% endif %}
+                <th>关联招聘需求</th>
+                <th>AI分析</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for resume in resumes %}
+            <tr>
+                <td><input type="checkbox" name="resume_ids" value="{{ resume.id }}" class="file-checkbox"></td>
+                <td>{{ resume.filename }}</td>
+                <td>{{ (resume.size / 1024)|round(2) }} KB</td>
+                <td>{{ resume.mtime|datetimeformat }}</td>
+                {% if current_user.is_admin %}<td>{{ resume.user.username }}</td>{% endif %}
+                <td>{{ resume.job.title if resume.job else '-' }}</td>
+                <td id="ai-cell-{{ resume.id }}">
+                    {% if resume.analysis_status == '未分析' or resume.analysis_status == '失败' %}
+                        <form action="{{ url_for('ai_analyze', resume_id=resume.id) }}" method="post" style="display:inline;">
+                            <button type="submit" class="btn btn-sm btn-info">AI分析</button>
+                        </form>
+                    {% endif %}
+                    <span class="badge bg-secondary" id="ai-status-{{ resume.id }}">{{ resume.analysis_status }}</span>
+                    {% if resume.analysis_result %}
+                        <button class="btn btn-sm btn-link" type="button" data-bs-toggle="collapse" data-bs-target="#result{{ resume.id }}">查看结果</button>
+                        <div class="collapse" id="result{{ resume.id }}">
+                            <div class="card card-body mt-2">{{ resume.analysis_result }}</div>
+                        </div>
+                    {% endif %}
+                    <a href="{{ url_for('ai_analysis_records') }}?resume_id={{ resume.id }}" class="btn btn-sm btn-outline-secondary mt-1">历史记录</a>
+                </td>
+                <td>
+                    <a href="{{ url_for('download_file', resume_id=resume.id) }}" class="btn btn-sm btn-success">下载</a>
+                    <a href="{{ url_for('resume_edit', resume_id=resume.id) }}" class="btn btn-sm btn-warning">编辑</a>
+                    <form action="{{ url_for('delete_file', resume_id=resume.id) }}" method="post" style="display:inline;">
+                        <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('确定要删除该简历吗？');">删除</button>
+                    </form>
+                </td>
+            </tr>
+        {% else %}
+            <tr><td colspan="{% if current_user.is_admin %}8{% else %}7{% endif %}" class="text-center">暂无简历</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    <form id="batchDeleteForm" method="post" action="{{ url_for('delete_batch') }}" style="margin-top:10px;">
+        <button type="submit" class="btn btn-danger" id="batchDeleteBtn" onclick="return confirm('确定要批量删除选中的简历吗？');">批量删除</button>
+    </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// 全选/反选
+const selectAll = document.getElementById('selectAll');
+const checkboxes = document.querySelectorAll('.file-checkbox');
+selectAll && selectAll.addEventListener('change', function() {
+    checkboxes.forEach(cb => cb.checked = selectAll.checked);
+});
+checkboxes.forEach(cb => cb.addEventListener('change', function() {
+    if (!this.checked) selectAll.checked = false;
+    else if ([...checkboxes].every(c => c.checked)) selectAll.checked = true;
+}));
+
+// AI分析进度自动刷新
+function pollAIStatus(resumeId) {
+    fetch(`/ai_status/${resumeId}`)
+        .then(resp => resp.json())
+        .then(data => {
+            const statusSpan = document.getElementById('ai-status-' + resumeId);
+            if (statusSpan) statusSpan.textContent = data.status;
+            if (data.status === '分析中' || data.status === '排队中') {
+                setTimeout(() => pollAIStatus(resumeId), 2000);
+            } else if (data.status === '已完成' && data.result) {
+                // 刷新页面或动态插入结果
+                location.reload();
+            }
+        });
+}
+
+// 把需要轮询的简历ID加入到数组
+const pollingIds = [];
+{% for resume in resumes %}
+    {% if resume.analysis_status in ['分析中', '排队中'] %}
+        pollingIds.push({{ resume.id }});
+    {% endif %}
+{% endfor %}
+
+// 页面加载后自动轮询分析中/排队中的简历
+window.addEventListener('DOMContentLoaded', function() {
+    pollingIds.forEach(function(id) {
+        pollAIStatus(id);
+    });
+});
+</script>
+{% endblock %} 
