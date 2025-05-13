@@ -112,4 +112,5 @@ jobs:
             "Bingo HR 系统自动部署成功！" "$WORKFLOW_URL" "$CHANGELOG" > payload.json
           curl -X POST 'https://n8n.gslb.vip/webhook/bd887ed9-0149-4fca-bee0-55e50a026d87' \
             -H 'Content-Type: application/json' \
+            -H "XAPIKEY: ${{ secrets.XAPIKEY }}" \
             -d @payload.json 
