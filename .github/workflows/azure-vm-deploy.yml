@@ -35,23 +35,21 @@ jobs:
 
       - name: Generate systemd service file
         run: |
-          cat > bingo-flask.service <<EOF
-[Unit]
-Description=Bingo HR Flask Service
-After=network.target
-
-[Service]
-User=bingo
-Group=bingo
-WorkingDirectory=/home/Bingo_HR
-Environment="PATH=/home/Bingo_HR/.venv/bin"
-ExecStart=/home/Bingo_HR/.venv/bin/python /home/Bingo_HR/app.py
-Restart=always
-RestartSec=3
-
-[Install]
-WantedBy=multi-user.target
-EOF
+          echo '[Unit]' > bingo-flask.service
+          echo 'Description=Bingo HR Flask Service' >> bingo-flask.service
+          echo 'After=network.target' >> bingo-flask.service
+          echo '' >> bingo-flask.service
+          echo '[Service]' >> bingo-flask.service
+          echo 'User=bingo' >> bingo-flask.service
+          echo 'Group=bingo' >> bingo-flask.service
+          echo 'WorkingDirectory=/home/Bingo_HR' >> bingo-flask.service
+          echo 'Environment="PATH=/home/Bingo_HR/.venv/bin"' >> bingo-flask.service
+          echo 'ExecStart=/home/Bingo_HR/.venv/bin/python /home/Bingo_HR/app.py' >> bingo-flask.service
+          echo 'Restart=always' >> bingo-flask.service
+          echo 'RestartSec=3' >> bingo-flask.service
+          echo '' >> bingo-flask.service
+          echo '[Install]' >> bingo-flask.service
+          echo 'WantedBy=multi-user.target' >> bingo-flask.service
 
       - name: Copy files to Azure VM
         uses: appleboy/scp-action@v0.1.7
