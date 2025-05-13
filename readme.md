@@ -56,6 +56,7 @@ resume_matcher/
 > - AZURE_VM_USER
 > - AZURE_VM_KEY（SSH私钥内容，建议使用专用部署密钥）
 > - AZURE_VM_PORT（如为22可省略）
+> - RESET_DB（可选，首次部署时设为true可自动重建数据库，后续建议设为false或删除）
 
 如需自定义部署路径或命令，请修改azure-vm-deploy.yml中的相关字段。
 
