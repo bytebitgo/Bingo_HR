@@ -31,6 +31,7 @@ jobs:
           port: ${{ secrets.AZURE_VM_PORT }} # moc, 默认22
           script: |
             sudo -i mkdir -p /home/Bingo_HR
+            sudo -i chown bingo:bingo /home/Bingo_HR
 
       - name: Copy files to Azure VM
         uses: appleboy/scp-action@v0.1.7
