@@ -840,7 +840,7 @@ if __name__ == '__main__':
         print("准备启动worker线程", flush=True)
         t = threading.Thread(target=ai_worker, daemon=True)
         t.start()
-    app.run(debug=False, use_reloader=False) 
+    app.run(host='0.0.0.0', debug=False, use_reloader=False) 
 
 
 
