@@ -1,7 +1,7 @@
 import os
 from flask import Flask, render_template, request, redirect, url_for, send_from_directory, flash, abort, jsonify
 from werkzeug.utils import secure_filename
-from utils import allowed_file, get_file_list, call_openai_api
+from utils import allowed_file, get_file_list, call_openai_api, async_upload_to_blob, secure_filename_keep_chinese
 from datetime import datetime
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
@@ -13,6 +13,10 @@ import mimetypes
 import csv
 from io import StringIO
 import base64  # 新增
+import pymysql
+from dotenv import load_dotenv
+import urllib.request
+import ssl
 try:
     import docx
 except ImportError:
@@ -32,7 +36,45 @@ ALLOWED_EXTENSIONS = {'pdf', 'doc', 'docx', 'xls', 'xlsx', 'jpg', 'jpeg', 'png',
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.secret_key = 'resume_matcher_secret'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///resume_matcher.db'
+
+# 优先从mysql.env读取MySQL配置
+load_dotenv('mysql.env')
+DB_URI = None
+engine_options = {}
+try:
+    mysql_user = os.getenv('MYSQL_USER')
+    mysql_password = os.getenv('MYSQL_PASSWORD')
+    mysql_host = os.getenv('MYSQL_HOST')
+    mysql_db = os.getenv('MYSQL_DB')
+    mysql_port = os.getenv('MYSQL_PORT', '3306')
+    if all([mysql_user, mysql_password, mysql_host, mysql_db]):
+        DB_URI = f"mysql+pymysql://{mysql_user}:{mysql_password}@{mysql_host}:{mysql_port}/{mysql_db}?charset=utf8mb4"
+        # 自动下载Azure MySQL CA证书
+        CA_PATH = 'DigiCertGlobalRootCA.crt.pem'
+        engine_options = {'connect_args': {'ssl': {'ca': CA_PATH}}}
+        # 测试MySQL连通性
+        try:
+            conn = pymysql.connect(
+                host=mysql_host,
+                port=int(mysql_port),
+                user=mysql_user,
+                password=mysql_password,
+                database=mysql_db,
+                ssl={'ca': CA_PATH}
+            )
+            conn.close()
+        except Exception as e:
+            print(f"[DB] MySQL连接失败: {e}, 自动回退到sqlite", flush=True)
+            DB_URI = None
+            engine_options = {}
+except Exception as e:
+    print(f"[DB] 读取mysql.env失败: {e}", flush=True)
+
+if not DB_URI:
+    DB_URI = 'sqlite:///resume_matcher.db'
+    engine_options = {}
+app.config['SQLALCHEMY_DATABASE_URI'] = DB_URI
+app.config['SQLALCHEMY_ENGINE_OPTIONS'] = engine_options
 db = SQLAlchemy(app)
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
@@ -119,9 +161,15 @@ def index():
         job_id = request.form.get('job_id')
         for file in files:
             if file and allowed_file(file.filename):
-                filename = secure_filename(file.filename)
+                filename = secure_filename_keep_chinese(file.filename)
                 save_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
                 file.save(save_path)
+                # 读取Azure Blob配置
+                azure_blob_enable = db.session.get(Setting, 'azure_blob_enable')
+                azure_blob_conn_str = db.session.get(Setting, 'azure_blob_conn_str')
+                azure_blob_container = db.session.get(Setting, 'azure_blob_container')
+                if azure_blob_enable and azure_blob_enable.value == '1' and azure_blob_conn_str and azure_blob_container:
+                    async_upload_to_blob(save_path, filename, azure_blob_conn_str.value, azure_blob_container.value)
                 # 写入数据库
                 resume = Resume(
                     filename=filename,
@@ -351,9 +399,18 @@ def admin_settings():
         'api_key': 'replace_with_your_api_key',
         'endpoint': 'https://myjycloud.openai.azure.com/',
         'deployment_name': 'gpt-4.5-preview',
-        'api_version': '2025-01-01-preview'
+        'api_version': '2025-01-01-preview',
+        'db_type': 'sqlite',
+        'mysql_user': '',
+        'mysql_password': '',
+        'mysql_host': '',
+        'mysql_db': '',
+        'mysql_port': '3306',
+        'azure_blob_enable': '0',
+        'azure_blob_conn_str': '',
+        'azure_blob_container': '',
     }
-    keys = ['api_key', 'endpoint', 'deployment_name', 'api_version']
+    keys = ['api_key', 'endpoint', 'deployment_name', 'api_version', 'db_type', 'mysql_user', 'mysql_password', 'mysql_host', 'mysql_db', 'mysql_port', 'azure_blob_enable', 'azure_blob_conn_str', 'azure_blob_container']
     settings = {}
     for k in keys:
         s = db.session.get(Setting, k)
@@ -370,7 +427,7 @@ def admin_settings():
             else:
                 db.session.add(Setting(key=k, value=v))
         db.session.commit()
-        flash('设置已保存', 'success')
+        flash('设置已保存，数据库切换需重启服务后生效', 'success')
         return redirect(url_for('admin_settings'))
     return render_template('admin_settings.html', settings=settings)
 
@@ -834,13 +891,37 @@ def resume_edit(resume_id):
         return redirect(url_for('index'))
     return render_template('resume_edit.html', resume=resume, jobs=jobs)
 
+@app.route('/admin/mysql_test', methods=['POST'])
+@login_required
+def admin_mysql_test():
+    if not current_user.is_admin:
+        return jsonify({'success': False, 'msg': '无权限'}), 403
+    host = request.form.get('mysql_host')
+    port = int(request.form.get('mysql_port') or 3306)
+    user = request.form.get('mysql_user')
+    password = request.form.get('mysql_password')
+    dbname = request.form.get('mysql_db') or None
+    try:
+        conn = pymysql.connect(
+            host=host,
+            port=port,
+            user=user,
+            password=password,
+            database=dbname,
+            ssl={'ssl': {}}
+        )
+        conn.close()
+        return jsonify({'success': True, 'msg': 'Azure MySQL连接成功！'})
+    except Exception as e:
+        return jsonify({'success': False, 'msg': f'连接失败: {e}'})
+
 if __name__ == '__main__':
     print("主进程已进入main", flush=True)
     for _ in range(MAX_AI_WORKERS):
         print("准备启动worker线程", flush=True)
         t = threading.Thread(target=ai_worker, daemon=True)
         t.start()
-    app.run(host='0.0.0.0', debug=False, use_reloader=False) 
+    app.run(host='0.0.0.0', port=5001, debug=False, use_reloader=False) 
 
 
 

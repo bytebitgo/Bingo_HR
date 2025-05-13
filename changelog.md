@@ -25,15 +25,13 @@
 ### 修复
 - 修正AI分析worker线程只在主进程中启动，避免多进程/多线程重复或未启动问题，提升系统稳定性。
 
-## [0.4.1] - 2025-03-11
-### 修复
-- AI分析worker日志输出加flush，Flask关闭debug和reloader，确保日志能实时输出到终端。
+## [0.4.1] - 2024-06-09
+### Changed
+- Flask服务监听端口由5000改为5001。
 
-## [0.4.2] - 2025-03-12
-### 改进
-- 改进AI分析队列导出功能，现在包含所有状态的任务（包括已完成任务）
-- 在导出CSV中添加分析时间列
-- 优化导出文件的命名和内容组织
+## [0.4.2] - 2024-06-09
+### 新增
+- 支持在mysql.env中配置Azure MySQL连接参数，系统启动时优先连接MySQL，失败时自动回退到sqlite。
 
 ## [0.4.4] - 2025-03-13
 ### 优化
@@ -74,4 +72,9 @@
 - 新增 .gitignore 文件，忽略常见 Python、Flask 项目及本地开发、部署相关的文件和目录。
 
 ## [0.4.11] - 2025-03-20
-- 新增 GitHub Actions 自动化部署工作流（.github/workflows/azure-vm-deploy.yml），支持推送main分支后自动部署到Azure VM。 
+- 新增 GitHub Actions 自动化部署工作流（.github/workflows/azure-vm-deploy.yml），支持推送main分支后自动部署到Azure VM。
+
+## [0.4.12] - 2025-03-21
+### 新增
+- 后台系统设置支持切换数据库类型（SQLite/ Azure Database for MySQL），可配置MySQL连接参数，切换后需重启服务生效。
+- requirements.txt 新增 pymysql 依赖。 

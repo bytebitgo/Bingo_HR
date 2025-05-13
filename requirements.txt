@@ -6,3 +6,6 @@ Werkzeug
 openai
 python-docx
 PyPDF2
+pymysql
+python-dotenv
+azure-storage-blob

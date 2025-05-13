@@ -42,7 +42,16 @@ resume_matcher/
 - 日志输出已修正，确保AI分析worker日志能实时显示在终端。
 - 依赖PyPDF2库用于PDF简历内容解析，未安装时AI分析会提示需安装依赖。
 
-## 版本历史（当前版本：0.4.11）
+## 数据库切换（SQLite/Azure MySQL）
+
+系统支持本地SQLite和Azure Database for MySQL两种数据库。
+
+- 默认使用本地SQLite。
+- 管理员可在"系统设置"页面切换数据库类型（sqlite/mysql），并配置MySQL连接参数（用户名、密码、主机、数据库名、端口）。
+- 切换数据库类型后，需重启服务后生效。
+- MySQL连接需安装pymysql依赖（已自动包含在requirements.txt中）。
+
+## 版本历史（当前版本：0.4.12）
 详见 [changelog.md](./changelog.md)
 
 ## 自动化部署（GitHub Actions -> Azure VM）
@@ -73,5 +82,33 @@ git commit -m "更新说明"
 git push origin main
 ```
 推送后可在GitHub仓库的Actions页面查看部署进度和日志。 
+
+## 版本说明
+
+当前版本：0.4.1
+
+## 启动说明
+
+默认启动命令：
+
+```
+python app.py
+```
+
+Flask服务默认监听端口为5001（原为5000）。
+
+## MySQL优先配置
+
+你可以在项目根目录下新建`mysql.env`文件，内容如下：
+
+```
+MYSQL_USER=xxx
+MYSQL_PASSWORD=xxx
+MYSQL_HOST=xxx.mysql.database.azure.com
+MYSQL_DB=xxx
+MYSQL_PORT=3306
+```
+
+系统启动时会优先尝试连接MySQL，若失败则自动回退到本地sqlite。
 
 fixme

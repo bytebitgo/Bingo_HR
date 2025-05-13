@@ -35,6 +35,86 @@
             <label class="form-label">API Version</label>
             <input type="text" class="form-control" name="api_version" value="{{ settings.api_version }}" autocomplete="off">
         </div>
+        <div class="mb-3">
+            <label class="form-label">数据库类型</label>
+            <select class="form-select" name="db_type" id="db_type" onchange="toggleMysqlFields()">
+                <option value="sqlite" {% if settings.db_type=="sqlite" %}selected{% endif %}>SQLite（本地）</option>
+                <option value="mysql" {% if settings.db_type=="mysql" %}selected{% endif %}>Azure MySQL</option>
+            </select>
+        </div>
+        <div id="mysql-fields" style="display:{% if settings.db_type=="mysql" %}block{% else %}none{% endif %};">
+            <div class="mb-3">
+                <label class="form-label">MySQL 用户名</label>
+                <input type="text" class="form-control" name="mysql_user" value="{{ settings.mysql_user }}" autocomplete="off">
+            </div>
+            <div class="mb-3">
+                <label class="form-label">MySQL 密码</label>
+                <input type="password" class="form-control" name="mysql_password" value="{{ settings.mysql_password }}" autocomplete="off">
+            </div>
+            <div class="mb-3">
+                <label class="form-label">MySQL Host</label>
+                <input type="text" class="form-control" name="mysql_host" value="{{ settings.mysql_host }}" autocomplete="off">
+            </div>
+            <div class="mb-3">
+                <label class="form-label">MySQL 数据库名</label>
+                <input type="text" class="form-control" name="mysql_db" value="{{ settings.mysql_db }}" autocomplete="off">
+            </div>
+            <div class="mb-3">
+                <label class="form-label">MySQL 端口</label>
+                <input type="text" class="form-control" name="mysql_port" value="{{ settings.mysql_port or '3306' }}" autocomplete="off">
+            </div>
+            <div class="mb-3">
+                <button type="button" class="btn btn-info" id="test-mysql-btn">测试Azure MySQL连通性</button>
+                <span id="mysql-test-result" class="ms-3"></span>
+            </div>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">是否启用Azure Blob上传</label>
+            <select class="form-select" name="azure_blob_enable" id="azure_blob_enable" onchange="toggleBlobFields()">
+                <option value="0" {% if settings.azure_blob_enable=="0" %}selected{% endif %}>否</option>
+                <option value="1" {% if settings.azure_blob_enable=="1" %}selected{% endif %}>是</option>
+            </select>
+        </div>
+        <div id="blob-fields" style="display:{% if settings.azure_blob_enable=="1" %}block{% else %}none{% endif %};">
+            <div class="mb-3">
+                <label class="form-label">Azure Blob连接字符串</label>
+                <input type="text" class="form-control" name="azure_blob_conn_str" value="{{ settings.azure_blob_conn_str }}" autocomplete="off">
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Azure Blob容器名</label>
+                <input type="text" class="form-control" name="azure_blob_container" value="{{ settings.azure_blob_container }}" autocomplete="off">
+            </div>
+        </div>
+        <script>
+        function toggleMysqlFields() {
+            var dbType = document.getElementById('db_type').value;
+            document.getElementById('mysql-fields').style.display = dbType === 'mysql' ? 'block' : 'none';
+        }
+        function toggleBlobFields() {
+            var enable = document.getElementById('azure_blob_enable').value;
+            document.getElementById('blob-fields').style.display = enable === '1' ? 'block' : 'none';
+        }
+        document.addEventListener('DOMContentLoaded', function() {
+            toggleBlobFields();
+            document.getElementById('test-mysql-btn')?.addEventListener('click', function() {
+                var form = this.closest('form');
+                var data = new FormData(form);
+                fetch('/admin/mysql_test', {
+                    method: 'POST',
+                    body: data
+                }).then(r => r.json()).then(res => {
+                    var el = document.getElementById('mysql-test-result');
+                    el.innerText = res.msg;
+                    el.style.color = res.success ? 'green' : 'red';
+                }).catch(() => {
+                    var el = document.getElementById('mysql-test-result');
+                    el.innerText = '请求失败';
+                    el.style.color = 'red';
+                });
+            });
+            document.getElementById('azure_blob_enable').addEventListener('change', toggleBlobFields);
+        });
+        </script>
         <button type="submit" class="btn btn-success">保存设置</button>
     </form>
 </div>
