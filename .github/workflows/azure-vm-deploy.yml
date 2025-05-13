@@ -78,6 +78,8 @@ jobs:
             sudo -i bash -c "cd /home/Bingo_HR && python3 -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt"
 
             echo "========== [CI] 步骤3：数据库重置判定 =========="
+            echo "[DEBUG] RESET_DB=[$RESET_DB], 长度=${#RESET_DB}"
+            echo "[DEBUG] RESET_DB ASCII:"; echo -n "$RESET_DB" | od -c
             if [ "$RESET_DB" = "true" ]; then
               echo "[CI] RESET_DB=true，准备执行数据库重置..."
               sudo -i /home/Bingo_HR/.venv/bin/python /home/Bingo_HR/reset_db.py
