@@ -63,6 +63,8 @@ jobs:
 
       - name: SSH to Azure VM and restart Flask app
         uses: appleboy/ssh-action@v0.1.10
+        env:
+          RESET_DB: ${{ secrets.RESET_DB }}
         with:
           host: ${{ secrets.AZURE_VM_HOST }} # moc
           username: ${{ secrets.AZURE_VM_USER }} # moc
@@ -71,6 +73,9 @@ jobs:
           script: |
             sudo apt-get update && sudo apt-get install -y python3-venv
             sudo -i bash -c "cd /home/Bingo_HR && python3 -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt"
+            if [ "$RESET_DB" = "true" ]; then
+              sudo -i /home/Bingo_HR/.venv/bin/python /home/Bingo_HR/reset_db.py
+            fi
             sudo mv /home/Bingo_HR/bingo-flask.service /etc/systemd/system/bingo-flask.service
             sudo systemctl daemon-reload
             sudo systemctl enable bingo-flask
