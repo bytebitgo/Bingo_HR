@@ -117,5 +117,6 @@ MYSQL_PORT=3306
 - 管理员可在"系统设置"页面启用Azure Key Vault，并填写Key Vault名称及机密名称。
 - 启用后，系统将优先从Key Vault获取OpenAI Key，未启用时使用本地配置。
 - 需确保服务器具备访问Key Vault的权限（如已配置Azure身份认证环境）。
+- 如果启用Azure Key Vault，则API Key字段可留空。
 
 fixme

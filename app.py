@@ -29,6 +29,8 @@ try:
     from openai import AzureOpenAI
 except ImportError:
     AzureOpenAI = None
+from azure.identity import DefaultAzureCredential
+from azure.keyvault.secrets import SecretClient
 
 UPLOAD_FOLDER = 'uploads'
 ALLOWED_EXTENSIONS = {'pdf', 'doc', 'docx', 'xls', 'xlsx', 'jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'md'}
@@ -168,8 +170,17 @@ def index():
                 azure_blob_enable = db.session.get(Setting, 'azure_blob_enable')
                 azure_blob_conn_str = db.session.get(Setting, 'azure_blob_conn_str')
                 azure_blob_container = db.session.get(Setting, 'azure_blob_container')
-                if azure_blob_enable and azure_blob_enable.value == '1' and azure_blob_conn_str and azure_blob_container:
-                    async_upload_to_blob(save_path, filename, azure_blob_conn_str.value, azure_blob_container.value)
+                azure_keyvault_name = db.session.get(Setting, 'azure_keyvault_name')
+                # 如果下拉选择的是Key Vault机密名，则自动去Key Vault获取真实内容
+                conn_str = azure_blob_conn_str.value if azure_blob_conn_str else ''
+                container = azure_blob_container.value if azure_blob_container else ''
+                if azure_keyvault_name and azure_keyvault_name.value:
+                    if conn_str:
+                        conn_str = get_secret_from_keyvault_if_needed(azure_keyvault_name.value, conn_str)
+                    if container:
+                        container = get_secret_from_keyvault_if_needed(azure_keyvault_name.value, container)
+                if azure_blob_enable and azure_blob_enable.value == '1' and conn_str and container:
+                    async_upload_to_blob(save_path, filename, conn_str, container)
                 # 写入数据库
                 resume = Resume(
                     filename=filename,
@@ -396,9 +407,9 @@ def admin_settings():
     if not current_user.is_admin:
         abort(403)
     default_settings = {
-        'api_key': 'replace_with_your_api_key',
+        'api_key': '如果启用Azure Key Vault则无需设置',
         'endpoint': 'https://myjycloud.openai.azure.com/',
-        'deployment_name': 'gpt-4.5-preview',
+        'deployment_name': 'gpt-40',
         'api_version': '2025-01-01-preview',
         'db_type': 'sqlite',
         'mysql_user': '',
@@ -927,8 +938,6 @@ def get_openai_key_from_settings(settings):
     """
     if settings.get('azure_keyvault_enable') == '1' and settings.get('azure_keyvault_name') and settings.get('azure_keyvault_secret_name'):
         try:
-            from azure.identity import DefaultAzureCredential
-            from azure.keyvault.secrets import SecretClient
             kv_name = settings['azure_keyvault_name']
             secret_name = settings['azure_keyvault_secret_name']
             kv_uri = f"https://{kv_name}.vault.azure.net"
@@ -951,8 +960,6 @@ def admin_keyvault_list_secrets():
     if not keyvault_name:
         return jsonify({'success': False, 'msg': 'Key Vault名称不能为空'})
     try:
-        from azure.identity import DefaultAzureCredential
-        from azure.keyvault.secrets import SecretClient
         kv_uri = f"https://{keyvault_name}.vault.azure.net"
         credential = DefaultAzureCredential()
         client = SecretClient(vault_url=kv_uri, credential=credential)
@@ -961,6 +968,20 @@ def admin_keyvault_list_secrets():
         return jsonify({'success': True, 'secrets': secret_names})
     except Exception as e:
         return jsonify({'success': False, 'msg': f'列出机密失败: {e}'})
+
+def get_secret_from_keyvault_if_needed(keyvault_name, secret_name):
+    # 如果keyvault_name和secret_name都存在，则从Key Vault获取真实内容，否则直接返回原值
+    if keyvault_name and secret_name:
+        try:
+            kv_uri = f"https://{keyvault_name}.vault.azure.net"
+            credential = DefaultAzureCredential()
+            client = SecretClient(vault_url=kv_uri, credential=credential)
+            secret = client.get_secret(secret_name)
+            return secret.value
+        except Exception as e:
+            print(f"[KeyVault] 获取机密失败: {e}")
+            return secret_name
+    return secret_name
 
 if __name__ == '__main__':
     print("主进程已进入main", flush=True)

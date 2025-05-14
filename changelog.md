@@ -83,4 +83,15 @@
 ### 新增
 - 系统设置页面支持启用Azure Key Vault，支持从Key Vault中选择OpenAI Key。
 - 后端支持优先从Key Vault获取OpenAI Key，兼容本地配置。
-- requirements.txt 新增 azure-identity、azure-keyvault-secrets 依赖。 
+- requirements.txt 新增 azure-identity、azure-keyvault-secrets 依赖。
+- 系统设置页面"Key Vault 名称+列出机密"按钮始终显示，支持实时列出机密。
+- OpenAI Key机密名称、Azure Blob连接字符串、Azure Blob容器名均支持下拉选择Key Vault机密。
+- 系统设置页面整体美化为现代化卡片风格，菜单与首页风格统一，分组清晰，主按钮带图标。
+- Deployment Name 默认值由 gpt-4.5-preview 改为 gpt-40。
+### 优化
+- 默认API Key提示为"如果启用Azure Key Vault则无需设置"，并在readme中同步说明。
+- 代码结构优化，所有设置项分组、留白、交互体验提升。
+
+## [0.4.14] - 2024-06-10
+### 优化
+- 系统设置默认API Key提示为"如果启用Azure Key Vault则无需设置"。 
