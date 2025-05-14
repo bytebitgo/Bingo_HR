@@ -51,7 +51,7 @@ resume_matcher/
 - 切换数据库类型后，需重启服务后生效。
 - MySQL连接需安装pymysql依赖（已自动包含在requirements.txt中）。
 
-## 版本历史（当前版本：0.4.13）
+## 版本历史（当前版本：0.4.15）
 详见 [changelog.md](./changelog.md)
 
 ## 自动化部署（GitHub Actions -> Azure VM）
@@ -85,7 +85,7 @@ git push origin main
 
 ## 版本说明
 
-当前版本：0.4.13
+当前版本：0.4.15
 
 ## 启动说明
 
