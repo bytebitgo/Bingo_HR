@@ -979,7 +979,7 @@ def get_secret_from_keyvault_if_needed(keyvault_name, secret_name):
             secret = client.get_secret(secret_name)
             return secret.value
         except Exception as e:
-            print(f"[KeyVault] 获取机密失败: {e}")
+            print(f"[KeyVault] 获取机密失败,检查Key Vault名称和机密名称是否正确: {e}")
             return secret_name
     return secret_name
 
