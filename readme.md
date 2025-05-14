@@ -51,7 +51,7 @@ resume_matcher/
 - 切换数据库类型后，需重启服务后生效。
 - MySQL连接需安装pymysql依赖（已自动包含在requirements.txt中）。
 
-## 版本历史（当前版本：0.4.12）
+## 版本历史（当前版本：0.4.13）
 详见 [changelog.md](./changelog.md)
 
 ## 自动化部署（GitHub Actions -> Azure VM）
@@ -85,7 +85,7 @@ git push origin main
 
 ## 版本说明
 
-当前版本：0.4.1
+当前版本：0.4.13
 
 ## 启动说明
 
@@ -110,5 +110,12 @@ MYSQL_PORT=3306
 ```
 
 系统启动时会优先尝试连接MySQL，若失败则自动回退到本地sqlite。
+
+## Azure Key Vault 支持
+
+系统支持通过Azure Key Vault集中管理OpenAI Key。
+- 管理员可在"系统设置"页面启用Azure Key Vault，并填写Key Vault名称及机密名称。
+- 启用后，系统将优先从Key Vault获取OpenAI Key，未启用时使用本地配置。
+- 需确保服务器具备访问Key Vault的权限（如已配置Azure身份认证环境）。
 
 fixme

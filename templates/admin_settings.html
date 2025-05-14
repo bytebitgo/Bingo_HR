@@ -20,6 +20,33 @@
     {% endwith %}
     <form method="post" class="mt-4" autocomplete="off">
         <div class="mb-3">
+            <label class="form-label">是否启用Azure Key Vault</label>
+            <select class="form-select" name="azure_keyvault_enable" id="azure_keyvault_enable" onchange="toggleKeyVaultFields()">
+                <option value="0" {% if settings.azure_keyvault_enable=="0" %}selected{% endif %}>否</option>
+                <option value="1" {% if settings.azure_keyvault_enable=="1" %}selected{% endif %}>是</option>
+            </select>
+        </div>
+        <div id="keyvault-fields" style="display:{% if settings.azure_keyvault_enable=="1" %}block{% else %}none{% endif %};">
+            <div class="mb-3">
+                <label class="form-label">Key Vault 名称</label>
+                <input type="text" class="form-control" name="azure_keyvault_name" value="{{ settings.azure_keyvault_name }}" autocomplete="off">
+            </div>
+            <div class="mb-3">
+                <label class="form-label">OpenAI Key机密名称</label>
+                <select class="form-select" name="azure_keyvault_secret_name" id="azure_keyvault_secret_name">
+                    {% if settings.azure_keyvault_secret_name %}
+                        <option value="{{ settings.azure_keyvault_secret_name }}" selected>{{ settings.azure_keyvault_secret_name }}</option>
+                    {% else %}
+                        <option value="">请选择或先列出机密</option>
+                    {% endif %}
+                </select>
+            </div>
+            <div class="mb-3">
+                <button type="button" class="btn btn-info" id="list-keyvault-secrets-btn">列出Key Vault机密</button>
+                <span id="keyvault-secrets-list" class="ms-3"></span>
+            </div>
+        </div>
+        <div class="mb-3">
             <label class="form-label">API Key</label>
             <input type="text" class="form-control" name="api_key" value="{{ settings.api_key }}" autocomplete="off">
         </div>
@@ -94,6 +121,10 @@
             var enable = document.getElementById('azure_blob_enable').value;
             document.getElementById('blob-fields').style.display = enable === '1' ? 'block' : 'none';
         }
+        function toggleKeyVaultFields() {
+            var enable = document.getElementById('azure_keyvault_enable').value;
+            document.getElementById('keyvault-fields').style.display = enable === '1' ? 'block' : 'none';
+        }
         document.addEventListener('DOMContentLoaded', function() {
             toggleBlobFields();
             document.getElementById('test-mysql-btn')?.addEventListener('click', function() {
@@ -113,6 +144,53 @@
                 });
             });
             document.getElementById('azure_blob_enable').addEventListener('change', toggleBlobFields);
+            toggleKeyVaultFields();
+            document.getElementById('azure_keyvault_enable').addEventListener('change', toggleKeyVaultFields);
+            document.getElementById('list-keyvault-secrets-btn').addEventListener('click', function() {
+                var keyvaultName = document.querySelector('input[name="azure_keyvault_name"]').value.trim();
+                var resultSpan = document.getElementById('keyvault-secrets-list');
+                var secretSelect = document.getElementById('azure_keyvault_secret_name');
+                if (!keyvaultName) {
+                    resultSpan.innerText = '请先填写Key Vault名称';
+                    resultSpan.style.color = 'red';
+                    secretSelect.innerHTML = '<option value="">请选择或先列出机密</option>';
+                    return;
+                }
+                resultSpan.innerText = '查询中...';
+                resultSpan.style.color = '#333';
+                var formData = new FormData();
+                formData.append('keyvault_name', keyvaultName);
+                fetch('/admin/keyvault_list_secrets', {
+                    method: 'POST',
+                    body: formData
+                }).then(r => r.json()).then(res => {
+                    if (res.success) {
+                        if (res.secrets.length === 0) {
+                            resultSpan.innerText = '无机密';
+                            secretSelect.innerHTML = '<option value="">无机密</option>';
+                        } else {
+                            resultSpan.innerText = '机密：' + res.secrets.join(', ');
+                            secretSelect.innerHTML = '';
+                            res.secrets.forEach(function(name, idx) {
+                                var opt = document.createElement('option');
+                                opt.value = name;
+                                opt.text = name;
+                                if (idx === 0) opt.selected = true;
+                                secretSelect.appendChild(opt);
+                            });
+                        }
+                        resultSpan.style.color = 'green';
+                    } else {
+                        resultSpan.innerText = res.msg;
+                        resultSpan.style.color = 'red';
+                        secretSelect.innerHTML = '<option value="">请选择或先列出机密</option>';
+                    }
+                }).catch(() => {
+                    resultSpan.innerText = '请求失败';
+                    resultSpan.style.color = 'red';
+                    secretSelect.innerHTML = '<option value="">请选择或先列出机密</option>';
+                });
+            });
         });
         </script>
         <button type="submit" class="btn btn-success">保存设置</button>

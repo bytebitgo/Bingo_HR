@@ -77,4 +77,10 @@
 ## [0.4.12] - 2025-03-21
 ### 新增
 - 后台系统设置支持切换数据库类型（SQLite/ Azure Database for MySQL），可配置MySQL连接参数，切换后需重启服务生效。
-- requirements.txt 新增 pymysql 依赖。 
+- requirements.txt 新增 pymysql 依赖。
+
+## [0.4.13] - 2024-06-10
+### 新增
+- 系统设置页面支持启用Azure Key Vault，支持从Key Vault中选择OpenAI Key。
+- 后端支持优先从Key Vault获取OpenAI Key，兼容本地配置。
+- requirements.txt 新增 azure-identity、azure-keyvault-secrets 依赖。 

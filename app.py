@@ -409,8 +409,11 @@ def admin_settings():
         'azure_blob_enable': '0',
         'azure_blob_conn_str': '',
         'azure_blob_container': '',
+        'azure_keyvault_enable': '0',
+        'azure_keyvault_name': '',
+        'azure_keyvault_secret_name': '',
     }
-    keys = ['api_key', 'endpoint', 'deployment_name', 'api_version', 'db_type', 'mysql_user', 'mysql_password', 'mysql_host', 'mysql_db', 'mysql_port', 'azure_blob_enable', 'azure_blob_conn_str', 'azure_blob_container']
+    keys = ['api_key', 'endpoint', 'deployment_name', 'api_version', 'db_type', 'mysql_user', 'mysql_password', 'mysql_host', 'mysql_db', 'mysql_port', 'azure_blob_enable', 'azure_blob_conn_str', 'azure_blob_container', 'azure_keyvault_enable', 'azure_keyvault_name', 'azure_keyvault_secret_name']
     settings = {}
     for k in keys:
         s = db.session.get(Setting, k)
@@ -484,7 +487,8 @@ def ai_worker():
             resume.analysis_status = '分析中'
             db.session.commit()
             try:
-                settings = {k: (db.session.get(Setting, k).value if db.session.get(Setting, k) else '') for k in ['api_key', 'endpoint', 'deployment_name', 'api_version']}
+                settings = {k: (db.session.get(Setting, k).value if db.session.get(Setting, k) else '') for k in ['api_key', 'endpoint', 'deployment_name', 'api_version', 'azure_keyvault_enable', 'azure_keyvault_name', 'azure_keyvault_secret_name']}
+                settings['api_key'] = get_openai_key_from_settings(settings)
                 print(f"[AI分析] 读取API参数: {settings}", flush=True)
                 ext = resume.filename.rsplit('.', 1)[-1].lower()
                 file_path = os.path.join(UPLOAD_FOLDER, resume.filename)
@@ -915,13 +919,56 @@ def admin_mysql_test():
     except Exception as e:
         return jsonify({'success': False, 'msg': f'连接失败: {e}'})
 
+# 获取OpenAI Key，支持Key Vault
+
+def get_openai_key_from_settings(settings):
+    """
+    根据settings，优先从Azure Key Vault获取openai key，否则用本地配置。
+    """
+    if settings.get('azure_keyvault_enable') == '1' and settings.get('azure_keyvault_name') and settings.get('azure_keyvault_secret_name'):
+        try:
+            from azure.identity import DefaultAzureCredential
+            from azure.keyvault.secrets import SecretClient
+            kv_name = settings['azure_keyvault_name']
+            secret_name = settings['azure_keyvault_secret_name']
+            kv_uri = f"https://{kv_name}.vault.azure.net"
+            credential = DefaultAzureCredential()
+            client = SecretClient(vault_url=kv_uri, credential=credential)
+            secret = client.get_secret(secret_name)
+            return secret.value
+        except Exception as e:
+            print(f"[KeyVault] 获取OpenAI Key失败: {e}")
+            return settings.get('api_key')
+    else:
+        return settings.get('api_key')
+
+@app.route('/admin/keyvault_list_secrets', methods=['POST'])
+@login_required
+def admin_keyvault_list_secrets():
+    if not current_user.is_admin:
+        return jsonify({'success': False, 'msg': '无权限'}), 403
+    keyvault_name = request.form.get('keyvault_name', '').strip()
+    if not keyvault_name:
+        return jsonify({'success': False, 'msg': 'Key Vault名称不能为空'})
+    try:
+        from azure.identity import DefaultAzureCredential
+        from azure.keyvault.secrets import SecretClient
+        kv_uri = f"https://{keyvault_name}.vault.azure.net"
+        credential = DefaultAzureCredential()
+        client = SecretClient(vault_url=kv_uri, credential=credential)
+        secrets = client.list_properties_of_secrets()
+        secret_names = [s.name for s in secrets]
+        return jsonify({'success': True, 'secrets': secret_names})
+    except Exception as e:
+        return jsonify({'success': False, 'msg': f'列出机密失败: {e}'})
+
 if __name__ == '__main__':
     print("主进程已进入main", flush=True)
     for _ in range(MAX_AI_WORKERS):
         print("准备启动worker线程", flush=True)
         t = threading.Thread(target=ai_worker, daemon=True)
         t.start()
-    app.run(host='0.0.0.0', port=5000, debug=False, use_reloader=False) 
+    app.run(host='0.0.0.0', port=5001, debug=False, use_reloader=False) 
 
 
 
