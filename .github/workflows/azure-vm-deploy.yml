@@ -104,10 +104,10 @@ jobs:
         if: success()
         run: |
           WORKFLOW_URL="https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
-          WORKFLOW_TITLE="${{ github.workflow }}"
+          COMMIT_MSG="${{ github.event.head_commit.message }}"
           CHANGELOG="$(cat changelog.md)"
-          python3 -c "import json,sys; msg=sys.argv[1]; url=sys.argv[2]; changelog=sys.argv[3]; title=sys.argv[4]; print(json.dumps({'msg':msg,'url':url,'changelog':changelog,'title':title}, ensure_ascii=False))" \
-            "Bingo HR 系统自动部署成功！" "$WORKFLOW_URL" "$CHANGELOG" "$WORKFLOW_TITLE" > payload.json
+          python3 -c "import json,sys; msg=sys.argv[1]; url=sys.argv[2]; changelog=sys.argv[3]; commit=sys.argv[4]; print(json.dumps({'msg':msg,'url':url,'changelog':changelog,'commit':commit}, ensure_ascii=False))" \
+            "Bingo HR 系统自动部署成功！" "$WORKFLOW_URL" "$CHANGELOG" "$COMMIT_MSG" > payload.json
           curl -X POST 'https://n8n.gslb.vip/webhook/bd887ed9-0149-4fca-bee0-55e50a026d87' \
             -H 'Content-Type: application/json' \
             -H "XAPIKEY: ${{ secrets.XAPIKEY }}" \
