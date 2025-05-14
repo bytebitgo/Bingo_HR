@@ -85,6 +85,7 @@ jobs:
               echo "[CI] RESET_DB=true，准备执行数据库重置..."
               sudo -i /home/Bingo_HR/.venv/bin/python /home/Bingo_HR/reset_db.py
               echo "[CI] reset_db.py 执行完毕。"
+              sudo chown bingo:bingo /home/Bingo_HR/resume_matcher.db
             else
               echo "[CI] RESET_DB!=true，跳过数据库重置。"
             fi
