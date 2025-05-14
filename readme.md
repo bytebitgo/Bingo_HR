@@ -95,7 +95,7 @@ git push origin main
 python app.py
 ```
 
-Flask服务默认监听端口为5001（原为5000）。
+Flask服务默认监听端口为5000。
 
 ## MySQL优先配置
 
