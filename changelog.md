@@ -62,6 +62,9 @@
 ### 修复
 - 修复招聘需求功能数据库表缺失的问题
 - 添加数据库迁移脚本，自动创建所需的数据库表
+### 变更
+- 全局将"简历管理"统一更名为"Candidate system"
+- 全局将"Bingo-AI-HR"统一更名为"Candidate Screening and Matching System"
 
 ## [0.4.9] - 2025-03-18
 ### 修复

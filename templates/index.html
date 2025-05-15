@@ -1,11 +1,11 @@
 {% extends 'base.html' %}
 
-{% block title %}简历管理 - 首页{% endblock %}
+{% block title %}Candidate system - 首页{% endblock %}
 
 {% block content %}
 <div class="container mt-5">
     <div class="d-flex justify-content-between align-items-center mb-3">
-        <h2>Bingo-AI-HR</h2>
+        <h2>Candidate Screening and Matching System</h2>
         <div>
             <span class="me-2">当前用户：{{ current_user.username }}{% if current_user.is_admin %}（超级管理员）{% endif %}</span>
             <a href="{{ url_for('jobs_list') }}" class="btn btn-outline-primary btn-sm me-2">招聘需求</a>

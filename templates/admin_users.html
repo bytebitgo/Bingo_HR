@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <title>用户管理 - Bingo-AI-HR</title>
+    <title>用户管理 - Candidate Screening and Matching System</title>
     <link href="/static/bootstrap.min.css" rel="stylesheet">
 </head>
 <body>
@@ -12,7 +12,7 @@
         <div>
             <a href="{{ url_for('admin_ai_queue') }}" class="btn btn-outline-info btn-sm me-2">AI分析队列</a>
             <a href="{{ url_for('admin_settings') }}" class="btn btn-outline-secondary btn-sm me-2">系统设置</a>
-            <a href="{{ url_for('index') }}" class="btn btn-outline-primary btn-sm">返回简历管理</a>
+            <a href="{{ url_for('index') }}" class="btn btn-outline-primary btn-sm">返回Candidate system</a>
         </div>
     </div>
     {% with messages = get_flashed_messages(with_categories=true) %}

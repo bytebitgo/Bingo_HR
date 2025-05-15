@@ -1,4 +1,4 @@
-# Bingo HR - Bingo-AI-HR
+# Candidate Screening and Matching System
 
 ## 项目简介
 本项目基于Flask开发，实现简历的批量上传、管理（下载、删除、批量删除、全选）和类型校验，后续可扩展智能评分。
