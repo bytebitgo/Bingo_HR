@@ -797,7 +797,7 @@ def ai_analysis_record_reanalyze(record_id):
     db.session.commit()
     ai_task_queue.put(resume.id)
     flash('已提交再次分析任务，请稍后刷新查看结果', 'success')
-    return redirect(url_for('ai_analysis_record_detail', record_id=record_id))
+    return redirect(url_for('ai_analysis_records', resume_id=resume.id))
 
 # 招聘需求管理路由
 @app.route('/jobs')

@@ -7,6 +7,13 @@
 </head>
 <body>
 <div class="container mt-5">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="alert alert-{{ category }}">{{ message }}</div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h2>AI分析历史记录</h2>
         <a href="{{ url_for('index') }}" class="btn btn-outline-primary btn-sm">返回Candidate system</a>
