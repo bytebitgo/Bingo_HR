@@ -36,7 +36,7 @@ jobs:
       - name: Generate systemd service file
         run: |
           echo '[Unit]' > bingo-flask.service
-          echo 'Description=Bingo HR Flask Service' >> bingo-flask.service
+          echo 'Description=Candidate Screening and Matching System Flask Service' >> bingo-flask.service
           echo 'After=network.target' >> bingo-flask.service
           echo '' >> bingo-flask.service
           echo '[Service]' >> bingo-flask.service
